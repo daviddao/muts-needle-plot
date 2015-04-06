@@ -9,6 +9,11 @@
  * @class
  */
 
+//Set the margin of the y axis 
+var yborder = -20;
+//Allow unique head size
+var uniqueHeadSize = true;
+
 function MutsNeedlePlot (config) {
 
     // INITIALIZATION
@@ -304,7 +309,7 @@ MutsNeedlePlot.prototype.drawRegions = function(svg, regionData) {
     var y = this.y;
     var x = this.x;
 
-    var below = true;
+    var below = false;
 
 
     getRegionStart = function(region) {
@@ -321,8 +326,9 @@ MutsNeedlePlot.prototype.drawRegions = function(svg, regionData) {
     var region_offset = bg_offset-3
     var text_offset = bg_offset + 20;
     if (below != true) {
-        text_offset = bg_offset+5;
+        text_offset = bg_offset+8;
     }
+
 
     function draw(regionList) {
 
@@ -334,7 +340,7 @@ MutsNeedlePlot.prototype.drawRegions = function(svg, regionData) {
             .attr("x", x(minCoord) )
             .attr("y", y(0) + bg_offset )
             .attr("width", x(maxCoord) - x(minCoord) )
-            .attr("height", 10)
+            .attr("height", 18)
             .attr("fill", "lightgrey");
 
 
@@ -358,7 +364,7 @@ MutsNeedlePlot.prototype.drawRegions = function(svg, regionData) {
             .attr("width", function (r) {
                 return x(r.end) - x(r.start)
             })
-            .attr("height", 16)
+            .attr("height", 24)
             .style("fill", function (data) {
                 return data.color
             })
@@ -529,7 +535,8 @@ MutsNeedlePlot.prototype.drawAxes = function(svg) {
 
     svg.append("svg:g")
       .attr("class", "y-axis axis")
-      .attr("transform", "translate(" + (this.buffer * 1.2 + - 10)  + ",0)")
+      //Set height of y-axis a little bit higher 
+      .attr("transform", "translate(" + (this.buffer * 1.2 + - 10)  + "," + yborder + ")")
       .call(yAxis);
 
     // appearance for x and y legend
@@ -542,7 +549,7 @@ MutsNeedlePlot.prototype.drawAxes = function(svg) {
     svg.append("text")
         .attr("class", "y-label")
         .attr("text-anchor", "middle")
-        .attr("transform", "translate(" + (this.buffer / 3) + "," + (this.height / 2) + "), rotate(-90)")
+        .attr("transform", "translate(" + (this.buffer / 3) + "," + (this.height / 2 + yborder) + "), rotate(-90)")
         .text(this.legends.y)
         .attr('font-weight', 'bold')
         .attr('font-size', 12);
@@ -573,7 +580,7 @@ MutsNeedlePlot.prototype.drawNeedles = function(svg, mutationData, regionData) {
        if (coord.indexOf("-") > -1) {
            coords = coord.split("-");
 
-           // place neede at middle of affected region
+           // place needle at middle of affected region
            coord = Math.floor((parseInt(coords[0]) + parseInt(coords[1])) / 2);
 
            // check for splice sites: "?-9" or "9-?"
@@ -671,15 +678,23 @@ MutsNeedlePlot.prototype.drawNeedles = function(svg, mutationData, regionData) {
         minSize = 4;
         maxSize = 10;
         headSizeScale = d3.scale.log().range([minSize,maxSize]).domain([1, highest/2]);
-        var headSize = function(n) {
-            return d3.min([d3.max([headSizeScale(n),minSize]), maxSize]);
-        };
+        
+        if(!uniqueHeadSize) {
+            var headSize = function(n) {
+                return d3.min([d3.max([headSizeScale(n),minSize]), maxSize]);
+            };
+        }else {
+            //Unique Head Sizes
+            var headSize = function(n) {
+                return 5;
+            }
+        }
 
 
         var needles = d3.select(".mutneedles").selectAll()
             .data(muts).enter()
             .append("line")
-            .attr("y1", function(data) { return y(data.stickHeight + data.value) + headSize(data.value) ; } )
+            .attr("y1", function(data) { return y(data.stickHeight + data.value) + headSize(data.value) + yborder ; } )
             .attr("y2", function(data) { return y(data.stickHeight) })
             .attr("x1", function(data) { return x(data.coord) })
             .attr("x2", function(data) { return x(data.coord) })
@@ -690,7 +705,7 @@ MutsNeedlePlot.prototype.drawNeedles = function(svg, mutationData, regionData) {
         var needleHeads = d3.select(".mutneedles").selectAll()
             .data(muts)
             .enter().append("circle")
-            .attr("cy", function(data) { return y(data.stickHeight+data.value) } )
+            .attr("cy", function(data) { return y(data.stickHeight+data.value) + yborder } )
             .attr("cx", function(data) { return x(data.coord) } )
             .attr("r", function(data) { return headSize(data.value) })
             .attr("class", "needle-head")
